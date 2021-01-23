@@ -5,4 +5,5 @@ GOBLIN = {'hits': '2d6',
               'str': 8,
               'dex': 14,
               'con': 10,
+              'attack': 4,
           }

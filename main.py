@@ -1,6 +1,14 @@
 from rolling import roll
 import monsters
+from random import randint
 
+base_object = {'passability': True, 'object': {'avatar': 0}}
+
+def create_moster(monster):
+    monster['hits'] = roll(monster['hits'])
+    monster['avatar'] = '?'
+
+    return monster
 
 class Graph:
     @staticmethod
@@ -27,20 +35,12 @@ class Graph:
                     new_dot.append(dot[index])
 
             new_dot.append(dot[8])
-            new_dot.insert(0, {'passability': True, 'object': {'is_basic_cell': True, 'avatar': 0}})
+            new_dot.insert(0, base_object.copy())
             graph_slave.append(new_dot)
 
             indexes_for_del = []
             new_dot = []
         return graph_slave
-
-    graph = create_graph.__func__(10, 10)
-
-
-class Monster:
-    def __init__(self, monster):
-        monster['hits'] = roll(monster['hits'])
-        monster['avatar'] = '?'
 
 
 class Graphic:
@@ -53,10 +53,33 @@ class Graphic:
             print('', end='\n')
 
 
-m = Monster(monsters.GOBLIN)
+class Game:
+    def place_monster(self, graph, monster):
+        index = randint(00, 69)
+        if graph[index][0]['passability']:
+            graph[index][0]['object'] = monster
+            graph[index][0]['passability'] = False
 
-G = Graph()
-g = G.graph
+    char_place = 94
+    char_placed = False
+
+    def place_char(self, graph, char, index):
+        if graph[index][0]['passability']:
+            graph[index][0]['object'] = char
+            graph[index][0]['passability'] = False
+            self.char_place = index
+
+    def replace_char(self, graph, char, index_to_replace):
+        if graph[index_to_replace][0]['passability']:
+            graph[index_to_replace][0]['passability'] = True
+            graph[self.char_place][0] = base_object.copy()
+            self.place_char(graph, char, index_to_replace)
+
+    def go_char(self, graph, go, char):
+        if go == 'w':
+            self.replace_char(graph, char, self.char_place - 10)
 
 
-Graphic.show_map(g)
+
+
+

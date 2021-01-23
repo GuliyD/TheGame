@@ -10,7 +10,7 @@ def roll(roll):
 
     roll_split = roll.split()
     first_elem_split = roll_split.pop(0).split('d')
-    result =  sum([randint(1, int(first_elem_split[1])) for i in range(int(first_elem_split[0]))])
+    result = sum([randint(1, int(first_elem_split[1])) for i in range(int(first_elem_split[0]))])
     for i in range(0, len(roll_split), 2):
         roll_split_elem = roll_split[i+1]
         if 'd' in roll_split_elem:
