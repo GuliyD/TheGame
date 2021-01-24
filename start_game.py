@@ -22,8 +22,13 @@ game = Game()
 [game.place_monster(g, i) for i in all_monsters]
 char_place = game.place_char(g, char, 94)
 
+
+
+
 Graphic.show_map(g)
-while 1:
+while not game.game_over:
+    if not game.your_turn:
+        game.enemies_turn(g)
+        Graphic.show_map(g)
     go = input('your turn\n>>>')
     game.go_char(g, go, char)
-    Graphic.show_map(g)

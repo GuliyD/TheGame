@@ -2,7 +2,7 @@ from rolling import roll
 import monsters
 from random import randint
 
-base_object = {'passability': True, 'object': {'avatar': 0}}
+base_object = {'passability': True, 'object': {'avatar': 0, 'enemy': False, 'player': False}}
 
 def create_moster(monster):
     monster['hits'] = roll(monster['hits'])
@@ -54,14 +54,54 @@ class Graphic:
 
 
 class Game:
+    game_over = False
+    your_turn = True
+    monsters_indexes = []
+
     def place_monster(self, graph, monster):
         index = randint(00, 69)
         if graph[index][0]['passability']:
             graph[index][0]['object'] = monster
             graph[index][0]['passability'] = False
+            self.monsters_indexes.append(index)
+
+    def deal_damage(self, graph, index_to_attack, damage):
+        graph[index_to_attack][0]['object']['hits'] -= damage
+        print(f'you deal {damage} damage')
+        if graph[index_to_attack][0]['object']['hits'] <= 0:
+            graph[index_to_attack][0] = base_object.copy()
+            graph[index_to_attack][0]['passability'] = True
+            print('KILL')
+            if graph[index_to_attack][0]['object']['player']:
+                print('game over')
+                self.game_over = True
+        else:
+            print(f"{graph[index_to_attack][0]['object']['hits']} hp now")
 
     char_place = 94
     char_placed = False
+
+    def roll_attack(self, graph, index_of_attacker, index_to_attack):
+        roll_d20 = roll('1d20')
+        print(f'd20 = {roll_d20}')
+        attacker_damage = graph[index_of_attacker][0]['object']['damage']
+        if roll_d20 in graph[index_of_attacker][0]['object']['critical']:
+            crit1 = roll(attacker_damage)
+            crit2 = roll(attacker_damage)
+            damage = crit1 + crit2
+            print(f'crit! = {attacker_damage} + {attacker_damage} = {crit1} + {crit2}')
+            self.deal_damage(graph, index_to_attack, damage)
+
+        else:
+            attack_roll = roll_d20 + graph[index_of_attacker][0]['object']['attack']
+            print(f"attack = {roll_d20} + {graph[index_of_attacker][0]['object']['attack']}")
+            enemy_AC = graph[index_to_attack][0]['object']['AC']
+            if attack_roll >= enemy_AC:
+                damage = roll(attacker_damage)
+                print(f'damage = {attacker_damage} = {damage}')
+                self.deal_damage(graph, index_to_attack, damage)
+            else:
+                print('miss')
 
     def place_char(self, graph, char, index):
         if graph[index][0]['passability']:
@@ -70,14 +110,95 @@ class Game:
             self.char_place = index
 
     def replace_char(self, graph, char, index_to_replace):
-        if graph[index_to_replace][0]['passability']:
+        if graph[index_to_replace][0]['object']['enemy']:
+            self.roll_attack(graph, self.char_place, index_to_replace)
+        elif graph[index_to_replace][0]['passability']:
             graph[index_to_replace][0]['passability'] = True
             graph[self.char_place][0] = base_object.copy()
             self.place_char(graph, char, index_to_replace)
 
     def go_char(self, graph, go, char):
-        if go == 'w':
-            self.replace_char(graph, char, self.char_place - 10)
+        try:
+            if go == 'w':
+                self.replace_char(graph, char, self.char_place - 10)
+                self.your_turn = False
+            elif go == 's':
+                self.replace_char(graph, char, self.char_place + 10)
+                self.your_turn = False
+
+            if not str(self.char_place)[1] == '9':
+                if go == 'd':
+                    self.replace_char(graph, char, self.char_place + 1)
+                    self.your_turn = False
+                elif go == 'sd' or go == 'ds':
+                    self.replace_char(graph, char, self.char_place + 11)
+                    self.your_turn = False
+                elif go == 'wd' or go == 'dw':
+                    self.replace_char(graph, char, self.char_place - 9)
+                    self.your_turn = False
+            if not str(self.char_place)[1] == '0':
+
+                if go == 'a':
+                    self.replace_char(graph, char, self.char_place - 1)
+                    self.your_turn = False
+                elif go == 'as' or go == 'sa':
+                    self.replace_char(graph, char, self.char_place + 9)
+                    self.your_turn = False
+                elif go == 'wa' or go == 'wa':
+                    self.replace_char(graph, char, self.char_place - 11)
+                    self.your_turn = False
+
+        except IndexError:
+            pass
+
+    def enemy_go(self, graph, i, index_start, index_to_go):
+        graph[index_to_go][0]['object'] = graph[index_start][0]['object'].copy()
+        graph[index_to_go][0]['passability'] = False
+
+        graph[index_start][0] = base_object.copy()
+        graph[index_start][0]['passability'] = True
+        self.your_turn = True
+        self.monsters_indexes[i] = index_to_go
+
+    def enemies_turn(self, graph):
+        for i, index in enumerate(self.monsters_indexes):
+            if graph[index][0]['object']['enemy']:
+                place_indexes = str(index)
+                if len(str(place_indexes)) == 1:
+                    x = int(place_indexes)
+                    y = 0
+
+                else:
+                    x = int(place_indexes[0])
+                    y = int(place_indexes[1])
+
+
+                char_x = int(str(self.char_place)[0])
+                char_y = int(str(self.char_place)[1])
+
+                x_master = x
+                y_master = y
+                if char_x > x:
+                    x += 1
+                elif char_x < x:
+                    x -= 1
+
+                if char_y > y:
+                    y += 1
+                elif char_y < y:
+                    y -= 1
+
+                index_to_go = int(str(x) + str(y))
+
+                if graph[index_to_go][0]['passability']:
+                    self.enemy_go(graph, i, index, index_to_go)
+                elif graph[int(str(y) + str(x_master))][0]['passability']:
+                    self.enemy_go(graph, i, index, int(str(y) + str(x_master)))
+                elif graph[int(str(y_master) + str(x))][0]['passability']:
+                    self.enemy_go(graph, i, index, int(str(y_master) + str(x)))
+
+
+
 
 
 

@@ -1,10 +1,12 @@
 fighter = {
-    'hits': 10,
-    'hit_dice': '1d10',
+    'player': True,
+    'hits': 30,
+    'hit_dice': '1d10 + 2',
     'type_of_attack': 'melee',
     'damage': '1d8',
-    'creat_radius': [20, 20],
+    'critical': [20],
     'AC': 18,
     'attack': 4,
-    'avatar': 'H'
+    'avatar': 'H',
+    'enemy': False
 }
