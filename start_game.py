@@ -27,8 +27,9 @@ char_place = game.place_char(g, char, 94)
 
 Graphic.show_map(g)
 while not game.game_over:
+    go = input('your turn\n>>>')
+    game.go_char(g, go, char)
+
     if not game.your_turn:
         game.enemies_turn(g)
         Graphic.show_map(g)
-    go = input('your turn\n>>>')
-    game.go_char(g, go, char)

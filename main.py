@@ -160,6 +160,9 @@ class Game:
         self.your_turn = True
         self.monsters_indexes[i] = index_to_go
 
+    def attack_hero(self, graph, monster_index, hero_index):
+        pass
+
     def enemies_turn(self, graph):
         for i, index in enumerate(self.monsters_indexes):
             if graph[index][0]['object']['enemy']:
@@ -169,15 +172,15 @@ class Game:
                     y = 0
 
                 else:
-                    x = int(place_indexes[0])
-                    y = int(place_indexes[1])
+                    y = int(place_indexes[0])
+                    x = int(place_indexes[1])
 
-
-                char_x = int(str(self.char_place)[0])
-                char_y = int(str(self.char_place)[1])
+                char_y = int(str(self.char_place)[0])
+                char_x = int(str(self.char_place)[1])
 
                 x_master = x
                 y_master = y
+
                 if char_x > x:
                     x += 1
                 elif char_x < x:
@@ -188,12 +191,17 @@ class Game:
                 elif char_y < y:
                     y -= 1
 
-                index_to_go = int(str(x) + str(y))
+                index_to_go = int(str(y) + str(x))
 
                 if graph[index_to_go][0]['passability']:
                     self.enemy_go(graph, i, index, index_to_go)
+
+                elif graph[index_to_go][0]['object']['player']:
+                    self.roll_attack(graph, index, index_to_go)
+
                 elif graph[int(str(y) + str(x_master))][0]['passability']:
                     self.enemy_go(graph, i, index, int(str(y) + str(x_master)))
+
                 elif graph[int(str(y_master) + str(x))][0]['passability']:
                     self.enemy_go(graph, i, index, int(str(y_master) + str(x)))
 
