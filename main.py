@@ -1,14 +1,13 @@
 from rolling import roll
-import monsters
 from random import randint
 
 base_object = {'passability': True, 'object': {'avatar': 0, 'enemy': False, 'player': False}}
 
 def create_moster(monster):
     monster['hits'] = roll(monster['hits'])
-    monster['avatar'] = '?'
 
     return monster
+
 
 class Graph:
     @staticmethod
@@ -55,53 +54,75 @@ class Graphic:
 
 class Game:
     game_over = False
+    win = False
     your_turn = True
     monsters_indexes = []
 
+    def del_from_graph(self, graph, index_to_del):
+        graph[index_to_del][0] = base_object.copy()
+        graph[index_to_del][0]['passability'] = True
+
     def place_monster(self, graph, monster):
         index = randint(00, 69)
-        if graph[index][0]['passability']:
-            graph[index][0]['object'] = monster
-            graph[index][0]['passability'] = False
-            self.monsters_indexes.append(index)
+        while 1:
+            if graph[index][0]['passability']:
+                graph[index][0]['object'] = monster
+                graph[index][0]['passability'] = False
+                self.monsters_indexes.append(index)
+                break
 
-    def deal_damage(self, graph, index_to_attack, damage):
+    def deal_damage(self, graph, index_to_attack, damage, index_of_attacker):
         graph[index_to_attack][0]['object']['hits'] -= damage
-        print(f'you deal {damage} damage')
+        print(f'{graph[index_to_attack][0]["object"]["name"]} take {damage} damage')
         if graph[index_to_attack][0]['object']['hits'] <= 0:
-            graph[index_to_attack][0] = base_object.copy()
-            graph[index_to_attack][0]['passability'] = True
             print('KILL')
             if graph[index_to_attack][0]['object']['player']:
-                print('game over')
+                print('GAME OVER')
                 self.game_over = True
+                self.del_from_graph(graph, index_to_attack)
+            else:
+                self.del_from_graph(graph, index_to_attack)
+                win = True
+                for dot in graph:
+                    if dot[0]['object']['enemy']:
+                        win = False
+                if win:
+                    self.win = win
+                    self.del_from_graph(graph, index_of_attacker)
+
         else:
-            print(f"{graph[index_to_attack][0]['object']['hits']} hp now")
+            print(f"{graph[index_to_attack][0]['object']['name']} have {graph[index_to_attack][0]['object']['hits']} hp now")
 
     char_place = 94
     char_placed = False
 
     def roll_attack(self, graph, index_of_attacker, index_to_attack):
+        print(f"\n{graph[index_of_attacker][0]['object']['name']} tries to attack")
         roll_d20 = roll('1d20')
         print(f'd20 = {roll_d20}')
-        attacker_damage = graph[index_of_attacker][0]['object']['damage']
-        if roll_d20 in graph[index_of_attacker][0]['object']['critical']:
-            crit1 = roll(attacker_damage)
-            crit2 = roll(attacker_damage)
-            damage = crit1 + crit2
-            print(f'crit! = {attacker_damage} + {attacker_damage} = {crit1} + {crit2}')
-            self.deal_damage(graph, index_to_attack, damage)
+        if not roll_d20 == 1:
+            attacker_damage = graph[index_of_attacker][0]['object']['damage']
 
-        else:
-            attack_roll = roll_d20 + graph[index_of_attacker][0]['object']['attack']
-            print(f"attack = {roll_d20} + {graph[index_of_attacker][0]['object']['attack']}")
-            enemy_AC = graph[index_to_attack][0]['object']['AC']
-            if attack_roll >= enemy_AC:
-                damage = roll(attacker_damage)
-                print(f'damage = {attacker_damage} = {damage}')
-                self.deal_damage(graph, index_to_attack, damage)
+            if roll_d20 in graph[index_of_attacker][0]['object']['critical']:
+                crit1 = roll(attacker_damage)
+                crit2 = roll(attacker_damage)
+                damage = crit1 + crit2
+                print(f'crit! = {attacker_damage} + {attacker_damage} = {crit1} + {crit2}')
+                self.deal_damage(graph, index_to_attack, damage, index_of_attacker)
+
             else:
-                print('miss')
+                attack_roll = roll_d20 + graph[index_of_attacker][0]['object']['attack']
+                print(f"attack = {roll_d20} + {graph[index_of_attacker][0]['object']['attack']}")
+                enemy_AC = graph[index_to_attack][0]['object']['AC']
+
+                if attack_roll >= enemy_AC:
+                    damage = roll(attacker_damage)
+                    print(f'damage = {attacker_damage} = {damage}')
+                    self.deal_damage(graph, index_to_attack, damage, index_of_attacker)
+                else:
+                    print('miss')
+        else:
+            print('miss')
 
     def place_char(self, graph, char, index):
         if graph[index][0]['passability']:
